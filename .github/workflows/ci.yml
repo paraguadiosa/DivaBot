@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Compile check
+        run: python -m compileall -q bot_discord.py bot_whatsapp.py llm_client.py scripts/llm_cli.py tests
+      - name: Unit tests
+        run: pytest
+
+  bridge:
+    name: WhatsApp bridge tests (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: whatsapp_bridge/package-lock.json
+      - working-directory: whatsapp_bridge
+        run: npm ci
+      - working-directory: whatsapp_bridge
+        run: npm test

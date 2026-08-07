@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "divabot"
+version = "0.1.0"
+description = "DivaBot — personal AI assistant for Discord & WhatsApp (DeepSeek or local llama.cpp)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["discord", "whatsapp", "llm", "deepseek", "llama.cpp", "baileys"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "discord.py>=2.4",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[project.scripts]
+diva-discord = "bot_discord:main"
+diva-whatsapp = "bot_whatsapp:main"
+
+[tool.setuptools]
+py-modules = ["bot_discord", "bot_whatsapp", "llm_client"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
