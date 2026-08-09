@@ -1,20 +1,47 @@
-# DivaBot ✨
+# DivaBot v1
 
 A personal AI assistant that answers on **Discord** and **WhatsApp**, powered by
 **DeepSeek's API** or a **local llama.cpp** server — same brain, every channel.
 
-```
-        ┌─────────────────────────────────────────────────────────┐
-        │                      llm_client.py                      │
-        │            local llama.cpp  OR  DeepSeek API            │
-        └───────────────▲─────────────────────────────▲───────────┘
-                        │ ask_llm()                   │ ask_llm()
-        ┌───────────────┴──────────┐   ┌──────────────┴──────────────┐
-        │      bot_discord.py      │   │       bot_whatsapp.py       │
-        │      (discord.py)        │   │  polls Baileys bridge :3001 │
-        └───────────────┬──────────┘   └──────────────┬──────────────┘
-                        │                             │
-                   Discord API              WhatsApp (your self-chat)
+```mermaid
+%%{init: {
+  'themeVariables': {
+    'darkMode': false,
+    'clusterBorder': '#30363d',
+    'lineColor': '#8b949e',
+    'fontSize': '11px'
+  },
+  'flowchart': {
+    'nodeSpacing': 15,
+    'rankSpacing': 15,
+    'padding': 5
+  }
+}}%%
+flowchart BT
+    subgraph Clients["Messaging Bots"]
+        direction LR
+        bot_discord["<b>bot_discord.py</b><br/><i>(discord.py)</i>"]
+        bot_whatsapp["<b>bot_whatsapp.py</b><br/><i>polls Baileys bridge :3001</i>"]
+    end
+
+    subgraph LLM["Central Backend"]
+        llm_client["<b>llm_client.py</b><br/>local llama.cpp OR DeepSeek API"]
+    end
+
+    subgraph Messaging["External Platforms"]
+        direction LR
+        discord_api["Discord API"]
+        whatsapp_api["WhatsApp <i>(your self-chat)</i>"]
+    end
+
+    bot_discord -->|"ask_llm()"| llm_client
+    bot_whatsapp -->|"ask_llm()"| llm_client
+
+    bot_discord <--> discord_api
+    bot_whatsapp <--> whatsapp_api
+
+    classDef darkCard fill:#21262d,stroke:#484f58,stroke-width:1.5px,color:#c9d1d9;
+    class bot_discord,bot_whatsapp,llm_client,discord_api,whatsapp_api darkCard;
 ```
 
 ## Features
@@ -43,17 +70,13 @@ A personal AI assistant that answers on **Discord** and **WhatsApp**, powered by
 ## Quickstart
 
 ```bash
-git clone https://github.com/<you>/DivaBot.git
+git clone https://github.com/paraguadiosa/DivaBot.git
 cd DivaBot
 
-# 1. Python environment + deps
 python -m venv .venv
 .venv/bin/pip install -e .          # or: .venv/bin/pip install -r requirements.txt
-
-# 2. Configuration
 cp .env.example .env                # then edit: DEEPSEEK_API_KEY, DISCORD_TOKEN, ...
 
-# 3. Install the WhatsApp bridge (Node)
 cd whatsapp_bridge && npm install && cd ..
 ```
 
