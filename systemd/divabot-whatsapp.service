@@ -1,0 +1,16 @@
+[Unit]
+Description=DivaBot WhatsApp frontend
+Wants=divabot-whatsapp-bridge.service
+After=divabot-whatsapp-bridge.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/eve/Coding_Projects/DivaBot
+Environment=LLM_PROVIDER=deepseek
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/eve/Coding_Projects/DivaBot/.venv/bin/diva-whatsapp
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
