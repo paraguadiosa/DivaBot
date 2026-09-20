@@ -1,0 +1,12 @@
+[Unit]
+Description=DivaBot WhatsApp Baileys bridge
+
+[Service]
+Type=simple
+WorkingDirectory=/home/eve/Coding_Projects/DivaBot
+ExecStart=/home/eve/.local/share/pi-node/node-v22.23.1-linux-x64/bin/node whatsapp_bridge/bridge.js --port 3001 --session /home/eve/Coding_Projects/DivaBot/whatsapp_session --mode self-chat
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

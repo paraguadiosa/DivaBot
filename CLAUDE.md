@@ -31,4 +31,13 @@ Frontends (both use the same `ask_llm()`):
 - [x] Discord bot (verified live)
 - [x] WhatsApp bot, self-chat mode (verified live)
 - [ ] WhatsApp group mode / media replies
-- [ ] systemd units for always-on bots
+- [x] Docker: `Dockerfile` + `docker-compose.yml` (perfiles: core/local/whatsapp) — Discord+DeepSeek verified live in container
+- [x] systemd units for always-on bots (see Always-on below)
+
+## Always-on
+Bots run as systemd user units, installed from `systemd/`.
+- Install and start: `./scripts/install_systemd.sh` (idempotent; also `enable --now` for all three units)
+- Units: `divabot-discord.service`, `divabot-whatsapp.service`, `divabot-whatsapp-bridge.service`
+- Logs: `journalctl --user -u divabot-discord -f` (same with `divabot-whatsapp` / `divabot-whatsapp-bridge`)
+- `sudo loginctl enable-linger eve` starts them at boot without a graphical login
+- Docker compose remains available, but the systemd user units now own the bots

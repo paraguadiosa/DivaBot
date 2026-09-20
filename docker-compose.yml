@@ -1,0 +1,106 @@
+# DivaBot — containerized. La One does not fit in a box, but La Two does.
+#
+# Usage:
+#   # 1) Create .env (tokens) — see scripts/setup_docker_env.sh
+#   # 2) Discord + DeepSeek API (no GPU needed):
+#        docker compose up -d discord
+#   # 3) Discord + local llama.cpp (CPU by default):
+#        docker compose --profile local up -d
+#   # 4) All three: Discord + llama.cpp + WhatsApp bridge:
+#        docker compose --profile local --profile whatsapp up -d
+#
+# GPU: set LLAMA_IMAGE to a CUDA/ROCm/Vulkan build, e.g.
+#        LLAMA_IMAGE=ghcr.io/ggml-org/llama.cpp:server-cuda docker compose --profile local up -d
+#      and uncomment the device_requests under `llama`.
+
+name: divabot
+
+services:
+  # ---------------------------------------------------------------------------
+  # Local LLM (llama.cpp). Only started with `--profile local`.
+  # Model files are mounted read-only from the host; pick one with MODEL_FILE.
+  # ---------------------------------------------------------------------------
+  llama:
+    image: ${LLAMA_IMAGE:-ghcr.io/ggml-org/llama.cpp:server}
+    profiles: ["local"]
+    command:
+      - "-m"
+      - "/models/${MODEL_FILE:-Hermes-3-Llama-3.1-8B.Q8_0.gguf}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+      - "--ctx-size"
+      - "4096"
+      - "--temp"
+      - "0.7"
+      - "--n-threads"
+      - "${LLAMA_THREADS:-8}"
+    volumes:
+      - ${MODELS_DIR:-/home/eve/models}:/models:ro
+    # Uncomment for NVIDIA GPU (llama.cpp:server-cuda) or ROCm/Vulkan builds:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    # For AMD ROCm you also need /dev/kfd and /dev/dri (see docker/README.md).
+    # ports: [ "8080:8080" ]   # optional: expose to the host for curl/llm_cli
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Discord bot (default frontend). Works with DeepSeek out of the box;
+  # switch to the local model with LLM_PROVIDER=local (needs `llama` up).
+  # ---------------------------------------------------------------------------
+  discord:
+    build: .
+    image: divabot:latest
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLAMA_API_URL: http://llama:8080/v1
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # WhatsApp frontend + Baileys bridge. Only started with `--profile whatsapp`.
+  # The session dir is mounted so the pairing survives restarts.
+  # ---------------------------------------------------------------------------
+  whatsapp:
+    build: .
+    image: divabot:latest
+    profiles: ["whatsapp"]
+    command: ["diva-whatsapp"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLAMA_API_URL: http://llama:8080/v1
+      WHATSAPP_BRIDGE_URL: http://bridge:3001
+    depends_on:
+      - bridge
+    restart: unless-stopped
+
+  bridge:
+    image: node:22-slim
+    profiles: ["whatsapp"]
+    working_dir: /app
+    command: ["node", "bridge.js", "--port", "3001", "--session", "/session", "--mode", "self-chat"]
+    environment:
+      WHATSAPP_REPLY_PREFIX: ${WHATSAPP_REPLY_PREFIX:-✨ *Diva*\n────────────\n}
+    volumes:
+      - ./whatsapp_bridge:/app:ro
+      - ./whatsapp_session:/session
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped

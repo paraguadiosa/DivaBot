@@ -1,0 +1,14 @@
+[Unit]
+Description=DivaBot Discord frontend
+
+[Service]
+Type=simple
+WorkingDirectory=/home/eve/Coding_Projects/DivaBot
+Environment=LLM_PROVIDER=deepseek
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/eve/Coding_Projects/DivaBot/.venv/bin/diva-discord
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

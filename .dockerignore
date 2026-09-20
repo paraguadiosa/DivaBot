@@ -1,0 +1,31 @@
+# --- Secrets (never into the image!) ---
+.env
+.env.*
+!.env.example
+
+# --- Local state ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+logs/
+outputs/
+
+# --- Git ---
+.git/
+.gitignore
+.github/
+
+# --- Tests (not needed at runtime) ---
+tests/
+
+# --- WhatsApp session (contains creds.json — the live session!) ---
+whatsapp_session/
+
+# --- Node bridge deps (mounted at runtime, not baked in) ---
+whatsapp_bridge/node_modules/
+
+# --- Models / big files ---
+models/
+*.gguf
